@@ -21,6 +21,8 @@ const eslint = require('gulp-eslint')
 const minify = require('gulp-clean-css')
 const connect = require('gulp-connect')
 const autoprefixer = require('gulp-autoprefixer')
+const replace = require('gulp-replace');
+const gulpif = require('gulp-if');
 
 const root = yargs.argv.root || '.'
 const port = yargs.argv.port || 8000
@@ -151,7 +153,8 @@ gulp.task('plugins', () => {
                 bundle.write({
                     file: plugin.output + '.js',
                     name: plugin.name,
-                    format: 'umd'
+                    format: 'umd',
+                    sourcemap: true
                 })
             });
     } ));
@@ -289,6 +292,21 @@ gulp.task('package', gulp.series(() =>
 gulp.task('reload', () => gulp.src(['**/*.html', '**/*.md'])
     .pipe(connect.reload()));
 
+const origin = "watch"; // Set the origin to match
+
+gulp.task('html', function() {
+    return gulp.src('src/*.html')
+      .pipe(gulpif(req => req.headers.origin.includes(origin), replace('xxxx', 'yyyy')))
+      .pipe(gulp.dest('dist/'));
+  });
+
+gulp.task('audience', function() {
+    return gulp.src('*.html')
+    .pipe(replace('xxxx', 'yyyy'))
+    .pipe(gulpif(req => req.headers.origin.includes(origin), connect.reload()))
+    .pipe(connect.reload());
+});
+
 gulp.task('serve', () => {
 
     connect.server({
@@ -302,7 +320,7 @@ gulp.task('serve', () => {
 
     gulp.watch(['js/**'], gulp.series('js', 'reload', 'eslint'))
 
-    gulp.watch(['plugin/**/plugin.js', 'plugin/**/*.html'], gulp.series('plugins', 'reload'))
+    gulp.watch(['plugin/**/plugin.js', 'plugin/**/*.html'], gulp.series('plugins', 'reload', 'audience'))
 
     gulp.watch([
         'css/theme/source/*.{sass,scss}',
