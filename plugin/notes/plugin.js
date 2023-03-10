@@ -176,7 +176,11 @@ const Plugin = () => {
 		// (added 12/5/22 as a XSS safeguard)
 		if( isSameOriginEvent( event ) ) {
 
-			let data = JSON.parse( event.data );
+			try {
+				data =  event.data;
+			}
+			catch( error ) {}
+
 			if( data && data.namespace === 'reveal-notes' && data.type === 'connected' ) {
 				clearInterval( connectInterval );
 				onConnected();
